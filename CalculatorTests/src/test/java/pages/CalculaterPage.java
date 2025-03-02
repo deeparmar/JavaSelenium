@@ -1,35 +1,22 @@
 package pages;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.remote.DesiredCapabilities;
-import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
-public class TestCalculatorPageObject {
+public class CalculaterPage {
 
     WebDriver driver;
     ChromeOptions options;
 
-    @FindBy(id = "amount")
-    public WebElement amountTextBox;
-
-    @FindBy(xpath = "//*[@id=\"interestForm\"]/div/button")
-    public WebElement intDropDown;
-
-    @FindBy(name = "duration")
-    public WebElement durationSelect;
-
-    @FindBy(xpath ="//*[@id=\"interestForm\"]/button")
-    public WebElement calculateButton;
+    public static String alertText;
 
     public void launchBrowser()
     {
@@ -37,67 +24,88 @@ public class TestCalculatorPageObject {
         options.addArguments("--remote-allow-origins=*");
         System.setProperty("webdriver.chrome.driver", System.getProperty("user.dir") + "/src/test/resources/chromedriver.exe");
         DesiredCapabilities capabilities = new DesiredCapabilities();
+
         driver = new ChromeDriver(options);
-        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
         driver.get("https://tenteststorage.z33.web.core.windows.net/index.html");
         driver.manage().window().maximize();
     }
 
+    public String getAlertText()
+    {
+        return alertText;
+    }
+
     public void enterAmount(String  amount)
     {
-        if(isElementDisplayed(amountTextBox,Duration.ofSeconds(2),true))
-        {
-            amountTextBox.clear();
-            amountTextBox.sendKeys(amount);
-        }
+        WebElement amountTextBox = driver.findElement(By.id("amount"));
+        amountTextBox.clear();
+        amountTextBox.sendKeys(amount);
+
+    }
+
+    public void clearAmount()
+    {
+        WebElement amountTextBox = driver.findElement(By.id("amount"));
+        amountTextBox.clear();
     }
 
     public void selectRate(String rate)
     {
+        WebElement intDropdown = driver.findElement(By.xpath("//*[@id=\"interestForm\"]/div/button"));
+        intDropdown.click();
 
-//        Actions actions = new Actions(driver);
-//        actions.moveToElement(intDropDown).perform();
-//
-//        WebElement chkBox = driver.findElement(By.xpath("//*[@id=\"interestForm\"]/div/div/label[" + rate +"]/input"));
-//        actions.moveToElement(chkBox).click().perform();
-//
-//
-        if(isElementDisplayed(intDropDown,Duration.ofSeconds(2),true))
-        {
-            intDropDown.clear();
-            intDropDown.click();
-        }
         WebElement chkBox = driver.findElement(By.xpath("//*[@id=\"interestForm\"]/div/div/label[" + rate +"]/input"));
-        //actions.moveToElement(chkBox).click().perform();
-        if(isElementDisplayed(chkBox,Duration.ofSeconds(2),true))
-        {
-            chkBox.clear();
-            chkBox.click();
-        }
+        chkBox.click();
+
     }
 
     public void selectDuration(String duration)
     {
        //Enter Duration for calaulating interest
+        WebElement durationSelect = driver.findElement(By.name("duration"));
         Select durationInput = new Select(durationSelect);
-        if(isElementDisplayed(durationSelect,Duration.ofSeconds(2),true))
-        {
-            durationInput.deselectAll();
-            durationInput.selectByVisibleText(duration);
-        }
+        durationInput.selectByVisibleText(duration);
 
-//        //Click on Calculate button
-//        WebElement e = driver.findElement(By.xpath("//*[@id=\"interestForm\"]/button"));
-//        actions.moveToElement(e).click().perform();
-//        e.click();
-//
     }
 
     public void clickCalculateButton()
     {
-        if(isElementDisplayed(calculateButton,Duration.ofSeconds(2),true)) {
+        Actions actions = new Actions(driver);
+        WebElement calculateButton = driver.findElement(By.xpath("//*[@id=\"interestForm\"]/button"));
+        actions.moveToElement(calculateButton).click().perform();
+        calculateButton.click();
+    }
+
+    public String clickCalculateButtonForValidation() {
+
+        Actions actions = new Actions(driver);
+        WebElement calculateButton = driver.findElement(By.xpath("//*[@id=\"interestForm\"]/button"));
+        actions.moveToElement(calculateButton).click().perform();
+        // driver.wait(5000);
+        try {
             calculateButton.click();
+            Alert alert = driver.switchTo().alert();
+            alertText = alert.getText();
+        }catch(UnhandledAlertException alertException){
+           alertText = alertException.getRawMessage().toString();
+           System.out.println(alertText);
         }
+        return  alertText;
+      //  return alertText;
+    }
+    public String getCalculatedInterest()
+    {
+        WebElement calculatedInterestText = driver.findElement(By.id("interestAmount"));
+        return calculatedInterestText.getText();
+
+    }
+
+    public String getTotalAmount()
+    {
+
+        WebElement totalAmountText = driver.findElement(By.id("totalAmount"));
+        return totalAmountText.getText();
 
     }
 
@@ -120,5 +128,8 @@ public class TestCalculatorPageObject {
 
     }
 
-
+    public void closeBrowser()
+    {
+       this.driver.quit();
+    }
 }
